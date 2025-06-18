@@ -1,0 +1,75 @@
+.candidato-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #181c23;
+    border-radius: 18px;
+    padding: 18px 8px 8px 8px;
+    margin-bottom: 10px;
+    min-width: 250px;
+    max-width: 320px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.candidato-img-container {
+    position: relative;
+    width: 220px;
+    height: 260px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+}
+.candidato-img {
+    width: 220px;
+    height: 260px;
+    object-fit: cover;
+    border-radius: 14px;
+    border: 5px solid;
+    box-sizing: border-box;
+    background: #222;
+}
+.logo-partido {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    width: 48px;
+    height: 48px;
+    background: #fff;
+    border-radius: 50%;
+    border: 2px solid #eee;
+    object-fit: contain;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+    padding: 4px;
+}
+.candidato-nombre {
+    font-weight: bold;
+    font-size: 1.1em;
+    margin-bottom: 2px;
+    color: #fff;
+    text-align: center;
+}
+.candidato-partido {
+    font-style: italic;
+    color: #ccc;
+    font-size: 1em;
+    margin-bottom: 8px;
+    text-align: center;
+}
+.candidato-votos {
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 2px;
+    text-align: center;
+}
+.candidato-porcentaje {
+    font-weight: bold;
+    color: #fff;
+    font-size: 2em;
+    margin-bottom: 4px;
+    text-align: center;
+}
+.candidato-color-dot {
+    font-size: 1.5em;
+    margin-top: 2px;
+    text-align: center;
+}
