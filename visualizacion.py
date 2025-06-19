@@ -57,24 +57,23 @@ def mostrar_candidatos(candidatos, resultados):
             <div class="candidato-partido">{candidato['partido']}</div>
             <div class="candidato-votos">Votos Totales: {votos_totales:,}</div>
             <div class="candidato-porcentaje">{porcentaje:.2f}%</div>
-            <div class="candidato-color-dot" style="color:{color_borde};">●</div>
         </div>
         """
         cols[i].markdown(html, unsafe_allow_html=True)
 
+@st.cache_data
 def cargar_mapa():
     import geopandas as gpd
     gpd.options.use_pygeos = True
     chile = gpd.read_file("fuentes/gadm41_CHL_1.shp")
-    # Reproyectar a UTM 19S (metros)
     chile = chile.to_crs(epsg=32719)
     chile = chile.explode(index_parts=False)
-    #Ajustar el mapa solo al territorio continental de Chile
+    # Simplifica y asigna de vuelta a la columna geometry
+    chile["geometry"] = chile["geometry"].simplify(tolerance=1000, preserve_topology=True)
     continente = chile[
-        (chile.geometry.centroid.x > 50000) & (chile.geometry.centroid.x < 900000) 
+        (chile.geometry.centroid.x > 50000) & (chile.geometry.centroid.x < 900000)
     ].copy()
-    # Opcional: volver al CRS original si lo necesitas
-    # continente = continente.to_crs(epsg=4326)
+    continente = continente.to_crs(epsg=4326)
     return continente
 
 def mostrar_mapa(regiones, resultados):
@@ -82,8 +81,17 @@ def mostrar_mapa(regiones, resultados):
     regiones["color"] = regiones.index.map(lambda idx: resultados[idx]['color'])
     regiones["ganador"] = regiones.index.map(lambda idx: resultados[idx]['candidato'])
 
-    fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+    fig, ax = plt.subplots(1, 1, figsize=(6,12))
     regiones.plot(ax=ax, color=regiones["color"], edgecolor="black", linewidth=0.3)
+
+    # Recortar el eje Y para expandir el mapa verticalmente
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    rango = ylim[1] - ylim[0]
+    padding = rango * 0.05  # poco espacio arriba y abajo
+    ax.set_ylim(ylim[0] - padding, ylim[1] + padding)
+
+    plt.subplots_adjust(left=0, right=0.6, top=1, bottom=0)
 
     from matplotlib.patches import Patch
     legend_elements = []
@@ -98,11 +106,11 @@ def mostrar_mapa(regiones, resultados):
         handles=legend_elements,
         title="Ganador por región",
         loc='lower left',
-        bbox_to_anchor=(-0.7, 0),  # Fuera del área del mapa, ajusta el segundo valor si es necesario
+        bbox_to_anchor=(-0.7, 0),
         frameon=False,
         labelcolor='white',
-        title_fontsize=7,
-        fontsize=7,
+        title_fontsize=12,
+        fontsize=12,
         borderaxespad=0
     )
     legend.get_title().set_color('white')
