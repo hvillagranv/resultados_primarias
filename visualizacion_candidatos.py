@@ -7,6 +7,7 @@ Este script se cargará en streamlit y se mostrará en la página de visualizaci
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import streamlit as st
+import os
 
 def mostrar_candidatos(candidatos, resultados):
     #Cargar el archivo estilos.css para mostrar los candidatos
@@ -44,7 +45,7 @@ def mostrar_candidatos(candidatos, resultados):
 
         # Destacar al ganador con marco blanco grueso en toda la tarjeta
         card_style = (
-            "box-shadow: 0 0 0 6px white;" if i == 0 else ""
+            "box-shadow: 0 0 0 6px white; margin-bottom:" if i == 0 else ""
         )
 
         html = f"""
@@ -63,18 +64,45 @@ def mostrar_candidatos(candidatos, resultados):
 
 @st.cache_data
 def cargar_mapa():
-    import geopandas as gpd
-    gpd.options.use_pygeos = True
-    chile = gpd.read_file("fuentes/gadm41_CHL_1.shp")
-    chile = chile.to_crs(epsg=32719)
-    chile = chile.explode(index_parts=False)
-    # Simplifica y asigna de vuelta a la columna geometry
-    chile["geometry"] = chile["geometry"].simplify(tolerance=1000, preserve_topology=True)
-    continente = chile[
-        (chile.geometry.centroid.x > 50000) & (chile.geometry.centroid.x < 900000)
+    """
+    Carga y transforma el mapa de regiones de Chile desde SHP o GeoJSON.
+    Si no existe el archivo GeoJSON simplificado, lo genera automáticamente.
+    Retorna: GeoDataFrame con geometrías simplificadas en EPSG:4326.
+    """
+    ruta_geojson = "fuentes/regiones_chile.geojson"
+    ruta_shapefile = "fuentes/gadm41_CHL_1.shp"
+
+    if os.path.exists(ruta_geojson):
+        chile = gpd.read_file(ruta_geojson)
+        return chile
+
+    # Si no existe el GeoJSON, generar desde SHP
+    print("🔄 Generando GeoJSON desde shapefile...")
+    gdf = gpd.read_file(ruta_shapefile)
+
+    # Proyección a UTM zona 19S (Chile continental)
+    gdf = gdf.to_crs(epsg=32719)
+
+    # Unificar geometrías multipart
+    gdf = gdf.explode(index_parts=False)
+
+    # Simplificar geometría
+    gdf["geometry"] = gdf["geometry"].simplify(tolerance=1000, preserve_topology=True)
+
+    # Filtrar solo el continente
+    gdf = gdf[
+        (gdf.geometry.centroid.x > 50000) & (gdf.geometry.centroid.x < 900000)
     ].copy()
-    continente = continente.to_crs(epsg=4326)
-    return continente
+
+    # Reproyectar a WGS84 para uso en web
+    gdf = gdf.to_crs(epsg=4326)
+
+    # Guardar para uso futuro
+    os.makedirs("fuentes", exist_ok=True)
+    gdf.to_file(ruta_geojson, driver="GeoJSON")
+    print(f"✅ GeoJSON guardado en: {ruta_geojson}")
+
+    return gdf
 
 def mostrar_mapa(regiones, resultados):
     regiones = regiones.copy()
@@ -109,13 +137,16 @@ def mostrar_mapa(regiones, resultados):
         bbox_to_anchor=(-0.7, 0),
         frameon=False,
         labelcolor='white',
-        title_fontsize=12,
+        title_fontsize=16,
         fontsize=12,
         borderaxespad=0
     )
     legend.get_title().set_color('white')
-
-    plt.title('Resultados de las Primarias Presidenciales 2025 en Chile', color='white')
+    plt.title(
+        'Resultados de las Primarias Presidenciales\n2025 a nivel regional',
+        color='white',
+        multialignment='center'
+    )   
     ax.set_axis_off()
     fig.patch.set_alpha(0)
     st.pyplot(fig, transparent=True)

@@ -1,15 +1,29 @@
+.candidato-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 24px; /* <--- más separación */
+    margin-bottom: 64px;
+}
+
+/* Uniformar altura y distribución interna */
 .candidato-card {
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
     align-items: center;
     background: #181c23;
     border-radius: 18px;
     padding: 18px 8px 8px 8px;
-    margin-bottom: 10px;
-    min-width: 250px;
-    max-width: 320px;
+    flex: 1 1 220px;
+    max-width: 260px;
+    min-width: 180px;
+    min-height: 460px; /* altura mínima uniforme */
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 28px;
 }
+
+/* Imagen */
 .candidato-img-container {
     position: relative;
     width: 220px;
@@ -28,6 +42,8 @@
     box-sizing: border-box;
     background: #222;
 }
+
+/* Logo del partido */
 .logo-partido {
     position: absolute;
     bottom: 10px;
@@ -41,35 +57,81 @@
     box-shadow: 0 1px 4px rgba(0,0,0,0.12);
     padding: 4px;
 }
+
+/* Textos */
+.candidato-nombre,
+.candidato-partido,
+.candidato-votos,
+.candidato-porcentaje,
+.candidato-color-dot {
+    text-align: center;
+    color: #fff;
+}
 .candidato-nombre {
     font-weight: bold;
     font-size: 1.1em;
     margin-bottom: 2px;
-    color: #fff;
-    text-align: center;
 }
 .candidato-partido {
     font-style: italic;
     color: #ccc;
     font-size: 1em;
     margin-bottom: 8px;
-    text-align: center;
 }
 .candidato-votos {
     font-weight: bold;
-    color: #fff;
     margin-bottom: 2px;
-    text-align: center;
 }
 .candidato-porcentaje {
     font-weight: bold;
-    color: #fff;
     font-size: 2em;
     margin-bottom: 4px;
-    text-align: center;
 }
 .candidato-color-dot {
     font-size: 1.5em;
     margin-top: 2px;
-    text-align: center;
+}
+
+/* Entre 640px y 1024px: 2 columnas por fila, 2 filas */
+@media (min-width: 640px) and (max-width: 1024px) {
+    .candidato-row {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px;
+        justify-items: center;
+    }
+    .candidato-card {
+        width: 95%;
+        max-width: 320px;
+        min-height: 460px;
+    }
+    .candidato-img-container,
+    .candidato-img {
+        width: 100%;
+        max-width: 220px;
+        aspect-ratio: 220 / 260;
+        height: auto;
+    }
+}
+
+/* Menor a 640px: 1 card por fila */
+@media (max-width: 639px) {
+    .candidato-row {
+        flex-direction: column;
+        align-items: center;
+        gap: 0; /* Elimina gap aquí para evitar doble espacio */
+    }
+    .candidato-card {
+        width: 95vw;
+        max-width: 340px;
+        min-height: 420px;
+        margin-bottom: 24px; /* <-- Agrega separación entre tarjetas */
+    }
+    .candidato-img-container,
+    .candidato-img {
+        width: 100%;
+        max-width: 180px;
+        aspect-ratio: 220 / 260;
+        height: auto;
+    }
 }
