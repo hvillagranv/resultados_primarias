@@ -97,16 +97,22 @@ def cargar_mapa():
     # Reproyectar a WGS84 para uso en web
     gdf = gdf.to_crs(epsg=4326)
 
-    # Guardar para uso futuro
+    # 🔧 Agrupar por nombre de región para unir geometrías disjuntas
+    gdf = gdf.dissolve(by="NAME_1", as_index=True)
+    gdf.index.name = None
+    gdf = gdf.reset_index()
+
     os.makedirs("fuentes", exist_ok=True)
     gdf.to_file(ruta_geojson, driver="GeoJSON")
-    print(f"✅ GeoJSON guardado en: {ruta_geojson}")
+    print(f"✅ GeoJSON agrupado guardado en: {ruta_geojson}")
 
     return gdf
 
 def mostrar_mapa(regiones, resultados):
     regiones = regiones.copy()
-    regiones["color"] = regiones.index.map(lambda idx: resultados[idx]['color'])
+    regiones = regiones.set_index("NAME_1")
+    regiones["color"] = regiones.index.map(lambda nombre: resultados[nombre]['color'])
+    regiones["ganador"] = regiones.index.map(lambda nombre: resultados[nombre]['candidato'])
     regiones["ganador"] = regiones.index.map(lambda idx: resultados[idx]['candidato'])
 
     fig, ax = plt.subplots(1, 1, figsize=(6,12))

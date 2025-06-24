@@ -13,27 +13,28 @@ from utils import (
 
 def generar_resultados(chile, candidatos):
     votos_por_region = {
-        region: {
-            candidato['nombre']: np.random.randint(1000, 250000)
-            for candidato in candidatos
-        }
-        for region in chile.index
+    row["NAME_1"]: {
+        c['nombre']: np.random.randint(1000, 250000)
+        for c in candidatos
     }
+    for _, row in chile.iterrows()
+    }   
 
     resultados = {}
-    for region in chile.index:
-        votos_region = votos_por_region[region]
-        total_votos = calcular_total_votos(votos_region)
-        ganador = obtener_candidato_ganador(votos_region)
+    for _, row in chile.iterrows():
+        nombre_region = row["NAME_1"]
+        votos_region = votos_por_region[nombre_region]
+        total_votos = sum(votos_region.values())
+        ganador = max(votos_region, key=votos_region.get)
         votos_ganador = votos_region[ganador]
-        porcentaje = calcular_porcentaje(votos_ganador, total_votos)
-        color = obtener_color_candidato(candidatos, ganador)
+        porcentaje = (votos_ganador / total_votos) * 100 if total_votos > 0 else 0
+        color = next(c['color_partido'] for c in candidatos if c['nombre'] == ganador)
 
-        resultados[region] = {
-            'candidato': ganador,
-            'color': color,
-            'votos': votos_ganador,
-            'porcentaje': porcentaje
+        resultados[nombre_region] = {
+            "candidato": ganador,
+            "color": color,
+            "votos": votos_ganador,
+            "porcentaje": porcentaje
         }
 
     return votos_por_region, resultados
@@ -86,11 +87,11 @@ def mostrar_resultados_regionales(chile, votos_por_region, resultados, candidato
     if region_original:
         region_data = chile[chile["NAME_1"] == region_original]
         if not region_data.empty:
-            idx = region_data.index[0]
-            votos_region = votos_por_region[idx]
+            nombre_region = region_data["NAME_1"].values[0]
+            votos_region = votos_por_region[nombre_region]
+            ganador = resultados[nombre_region]['candidato']
             total = sum(votos_region.values())
-            ganador = resultados[idx]['candidato']
 
             with region_placeholder:
-                candidatos_votos = obtener_candidatos_region(idx, votos_region, total, candidatos)
+                candidatos_votos = obtener_candidatos_region(nombre_region, votos_region, total, candidatos)
                 renderizar_tarjetas_candidatos(candidatos_votos, ganador)
