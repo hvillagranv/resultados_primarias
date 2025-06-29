@@ -16,10 +16,11 @@ st.title("Primarias Presidenciales 2025 - Chile")
 
 # Cargar datos
 chile = cargar_mapa()
-votos_por_region, resultados = generar_resultados(chile, candidatos)
+votos_por_region, resultados = generar_resultados(chile, candidatos,"resultados_por_comuna.csv")
 
 # Mostrar resumen nacional
 st.subheader("Resultados a Nivel Nacional")
+#Obtener hora de actualización desde el Servel (hacer scraping)
 hora_actualizacion = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
 st.markdown(f"**Última actualización:** {hora_actualizacion}")
 mostrar_candidatos(candidatos, resultados)

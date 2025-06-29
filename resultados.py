@@ -2,35 +2,64 @@
 
 import streamlit as st
 import numpy as np
+import pandas as pd
 from utils import (
-    calcular_total_votos,
-    calcular_porcentaje,
-    obtener_candidato_ganador,
-    obtener_color_candidato,
     obtener_mapeo_regiones,
     obtener_regiones_ordenadas
 )
 
-def generar_resultados(chile, candidatos):
-    votos_por_region = {
-    row["NAME_1"]: {
-        c['nombre']: np.random.randint(1000, 250000)
-        for c in candidatos
+def generar_resultados(chile, candidatos, archivo):
+    df = pd.read_csv(archivo, encoding="utf-8")
+    mapa_nombres = {
+        "1 GONZALO WINTER ETCHEBERRY": "Gonzalo Winter",
+        "2 JEANNETTE JARA ROMAN": "Jeannette Jara",
+        "3 CAROLINA TOHA MORALES": "Carolina Tohá",
+        "4 JAIME MULET MARTINEZ": "Jaime Mulet"
     }
-    for _, row in chile.iterrows()
-    }   
+    mapa_regiones = {
+        "DE ARICA Y PARINACOTA": "Arica y Parinacota",
+        "DE TARAPACA": "Tarapacá",
+        "DE ANTOFAGASTA": "Antofagasta",
+        "DE ATACAMA": "Atacama",
+        "DE COQUIMBO": "Coquimbo",
+        "DE VALPARAISO": "Valparaíso",
+        "METROPOLITANA DE SANTIAGO": "Metropolitana de Santiago",
+        "DEL LIBERTADOR GENERAL BERNARDO O'HIGGINS": "O'Higgins",
+        "DEL MAULE": "Maule",
+        "DE ÑUBLE": "Ñuble",
+        "DEL BIOBIO": "Biobío",
+        "DE LA ARAUCANIA": "La Araucanía",
+        "DE LOS RIOS": "Los Ríos",
+        "DE LOS LAGOS": "Los Lagos",
+        "DE AYSEN DEL GENERAL IBÁÑEZ DEL CAMPO": "Aysén",
+        "DE MAGALLANES Y DE LA ANTARTICA CHILENA": "Magallanes"
+    }
+    df["Lista/Candidato"] = df["Lista/Candidato"].replace(mapa_nombres)
+    df["Región"] = df["Región"].replace(mapa_regiones)
 
-    resultados = {}
+    votos_por_region = {}
+
     for _, row in chile.iterrows():
         nombre_region = row["NAME_1"]
-        votos_region = votos_por_region[nombre_region]
+        df_region = df[df["Región"] == nombre_region]
+
+        votos_region = {}
+        for c in candidatos:
+            nombre_candidato = c["nombre"]
+            votos = df_region[df_region["Lista/Candidato"] == nombre_candidato]["Votos"].sum()
+            votos_region[nombre_candidato] = votos
+
+        votos_por_region[nombre_region] = votos_region  
+
+    resultados = {}
+    for region, votos_region in votos_por_region.items():
         total_votos = sum(votos_region.values())
         ganador = max(votos_region, key=votos_region.get)
         votos_ganador = votos_region[ganador]
         porcentaje = (votos_ganador / total_votos) * 100 if total_votos > 0 else 0
         color = next(c['color_partido'] for c in candidatos if c['nombre'] == ganador)
 
-        resultados[nombre_region] = {
+        resultados[region] = {
             "candidato": ganador,
             "color": color,
             "votos": votos_ganador,
