@@ -86,5 +86,5 @@ Los resultados presentados son completamente simulados y **no representan cifras
 ## ✅ TO DO
 
 - [ ] Agregar visualización de resultados por grandes zonas (Gran Santiago, Gran Valparaíso, Gran Concepción).
-- [ ] Incorporar datos reales desde Servel cuando estén disponibles.
+- [ ] Incluir porcentaje de conteo y fecha de actualización
 - [ ] Hacer que el mapa sea interactivo para quitar el selector y mejorar la navegación del sitio.

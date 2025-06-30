@@ -16,14 +16,14 @@ st.title("Primarias Presidenciales 2025 - Chile")
 
 # Cargar datos
 chile = cargar_mapa()
-votos_por_region, resultados = generar_resultados(chile, candidatos,"resultados_por_comuna.csv")
+votos_por_region, resultados = generar_resultados(chile, candidatos,"resultados_por_region.csv")
 
 # Mostrar resumen nacional
 st.subheader("Resultados a Nivel Nacional")
-#Obtener hora de actualización desde el Servel (hacer scraping)
-hora_actualizacion = pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
-st.markdown(f"**Última actualización:** {hora_actualizacion}")
-mostrar_candidatos(candidatos, resultados)
+df = pd.read_csv("resultados_por_region.csv")  # o usa un path dinámico
+hora_actualizacion = df["Fecha Datos"].iloc[0] if "Fecha Datos" in df.columns else "desconocida"
+st.markdown(f"**Última actualización del Servel:** {hora_actualizacion}")
+mostrar_candidatos(candidatos, resultados, votos_por_region)
 st.markdown('<div style="margin-top:32px"></div>', unsafe_allow_html=True)
 
 col1, col2 = st.columns([1, 2])

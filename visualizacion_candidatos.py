@@ -9,21 +9,28 @@ import matplotlib.pyplot as plt
 import streamlit as st
 import os
 
-def mostrar_candidatos(candidatos, resultados):
-    #Cargar el archivo estilos.css para mostrar los candidatos
+def mostrar_candidatos(candidatos, resultados, votos_por_region):
+    import streamlit as st
+
+    # Cargar estilos CSS
     with open("estilos.css", encoding="utf-8") as f:
         estilos = f"<style>{f.read()}</style>"
     st.markdown(estilos, unsafe_allow_html=True)
 
-    # Calcular votos totales por candidato
-    total_votos = sum(resultados[region]['votos'] for region in resultados)
+    # Votos nacionales totales por candidato, incluyendo extranjero
+    votos_nacionales = votos_por_region.get("Total Nacional", {})
+    votos_extranjero = votos_por_region.get("EXTRANJERO", {})
+
+    votos_combinados = {}
+    for nombre in set(votos_nacionales.keys()).union(votos_extranjero.keys()):
+        votos_combinados[nombre] = votos_nacionales.get(nombre, 0) + votos_extranjero.get(nombre, 0)
+
+    total_votos = sum(votos_combinados.values())
+
     candidatos_votos = []
     for candidato in candidatos:
-        votos_totales = sum(
-            resultados[region]['votos']
-            for region in resultados
-            if resultados[region]['candidato'] == candidato['nombre']
-        )
+        nombre = candidato["nombre"]
+        votos_totales = votos_nacionales.get(nombre, 0)
         porcentaje = (votos_totales / total_votos) * 100 if total_votos > 0 else 0
         candidatos_votos.append({
             "candidato": candidato,
@@ -31,8 +38,11 @@ def mostrar_candidatos(candidatos, resultados):
             "porcentaje": porcentaje
         })
 
-    # Ordenar de mayor a menor cantidad de votos
+    # Ordenar candidatos por votos
     candidatos_votos.sort(key=lambda x: x["votos"], reverse=True)
+
+    # Mostrar tarjetas con resultados
+    st.markdown("### Resultados Nacionales (incluye votos en el extranjero)")
 
     cols = st.columns(len(candidatos))
     for i, data in enumerate(candidatos_votos):
@@ -43,7 +53,6 @@ def mostrar_candidatos(candidatos, resultados):
         imagen = candidato['imagen']
         logo = candidato['icono_partido']
 
-        # Destacar al ganador con marco blanco grueso en toda la tarjeta
         card_style = (
             "box-shadow: 0 0 0 6px white; margin-bottom:" if i == 0 else ""
         )
@@ -61,6 +70,7 @@ def mostrar_candidatos(candidatos, resultados):
         </div>
         """
         cols[i].markdown(html, unsafe_allow_html=True)
+
 
 @st.cache_data
 def cargar_mapa():
@@ -109,33 +119,64 @@ def cargar_mapa():
     return gdf
 
 def mostrar_mapa(regiones, resultados):
+    import matplotlib.pyplot as plt
+    import streamlit as st
+    from matplotlib.patches import Patch
+
     regiones = regiones.copy()
     regiones = regiones.set_index("NAME_1")
-    regiones["color"] = regiones.index.map(lambda nombre: resultados[nombre]['color'])
-    regiones["ganador"] = regiones.index.map(lambda nombre: resultados[nombre]['candidato'])
-    regiones["ganador"] = regiones.index.map(lambda idx: resultados[idx]['candidato'])
+
+    def normalizar_nombre_region(nombre_raw):
+        nombres_regiones = {
+            "Arica y Parinacota": "Arica y Parinacota",
+            "Tarapacá": "Tarapacá",
+            "Antofagasta": "Antofagasta",
+            "Atacama": "Atacama",
+            "Coquimbo": "Coquimbo",
+            "Valparaíso": "Valparaíso",
+            "Santiago Metropolitan": "Metropolitana de Santiago",
+            "Libertador General Bernardo O'Hi": "O'Higgins",
+            "Maule": "Maule",
+            "Ñuble": "Ñuble",
+            "Bío-Bío": "Biobío",
+            "Araucanía": "La Araucanía",
+            "Los Ríos": "Los Ríos",
+            "Los Lagos": "Los Lagos",
+            "Aysén del General Ibañez del Cam": "Aysén",
+            "Magallanes y Antártica Chilena": "Magallanes"
+        }
+        return nombres_regiones.get(nombre_raw, nombre_raw)
+
+    # Mapear colores y ganadores usando nombre normalizado para buscar en resultados
+    regiones["color"] = regiones.index.map(
+        lambda nombre: resultados.get(normalizar_nombre_region(nombre), {}).get('color', '#CCCCCC')
+    )
+    regiones["ganador"] = regiones.index.map(
+        lambda nombre: resultados.get(normalizar_nombre_region(nombre), {}).get('candidato', 'Sin datos')
+    )
 
     fig, ax = plt.subplots(1, 1, figsize=(6,12))
     regiones.plot(ax=ax, color=regiones["color"], edgecolor="black", linewidth=0.3)
 
-    # Recortar el eje Y para expandir el mapa verticalmente
+    # Recortar el eje Y para expandir verticalmente el mapa
     xlim = ax.get_xlim()
     ylim = ax.get_ylim()
     rango = ylim[1] - ylim[0]
-    padding = rango * 0.05  # poco espacio arriba y abajo
+    padding = rango * 0.05
     ax.set_ylim(ylim[0] - padding, ylim[1] + padding)
 
     plt.subplots_adjust(left=0, right=0.6, top=1, bottom=0)
 
-    from matplotlib.patches import Patch
     legend_elements = []
     candidatos_vistos = set()
     for idx in regiones.index:
-        candidato = resultados[idx]['candidato']
-        color = resultados[idx]['color']
-        if candidato not in candidatos_vistos:
+        nombre_normalizado = normalizar_nombre_region(idx)
+        candidato = resultados.get(nombre_normalizado, {}).get('candidato', None)
+        color = resultados.get(nombre_normalizado, {}).get('color', None)
+        if candidato and candidato not in candidatos_vistos:
             legend_elements.append(Patch(facecolor=color, edgecolor='black', label=candidato))
             candidatos_vistos.add(candidato)
+
     legend = ax.legend(
         handles=legend_elements,
         title="Ganador por región",
@@ -148,12 +189,12 @@ def mostrar_mapa(regiones, resultados):
         borderaxespad=0
     )
     legend.get_title().set_color('white')
+
     plt.title(
         'Resultados de las Primarias Presidenciales\n2025 a nivel regional',
         color='white',
         multialignment='center'
-    )   
+    )
     ax.set_axis_off()
     fig.patch.set_alpha(0)
     st.pyplot(fig, transparent=True)
-
