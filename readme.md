@@ -2,6 +2,8 @@
 
 Aplicación interactiva desarrollada con **Streamlit** para visualizar resultados simulados de las Primarias Presidenciales 2025 en Chile. Permite explorar los resultados a nivel nacional y regional, con un enfoque visual atractivo, responsivo y fácil de interpretar.
 
+Se accede a través de [este enlace](https://resultados-primarias-2025.streamlit.app/)
+
 ---
 
 ## 🚀 Características
